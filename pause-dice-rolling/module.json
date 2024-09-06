@@ -23,5 +23,5 @@
   "minimumCoreVersion": "12",
   "compatibleCoreVersion": "12",
   "manifest": "https://raw.githubusercontent.com/MrTranscended/Beep-Boop/main/pause-dice-rolling/module.json",
-  "download": "https://github.com/MrTranscended/Beep-Boop/blob/main/pause-dice-rolling/pause-dice-rolling-v1.0.1.zip",
+  "download": "https://github.com/MrTranscended/Beep-Boop/raw/main/pause-dice-rolling/pause-dice-rolling-v1.0.1.zip",
 }
