@@ -3,7 +3,7 @@
   "title": "Pause Dice",
   "description": "Allows the GM to pause/un-pause dice rolling and lock/unlock specific player rolls.",
   "version": "1.0.0",
-  "author": "Kane Martin",
+  "author": "Mr. Transcended",
   "scripts": ["pause-dice.js"],
   "styles": ["styles.css"],
   "esmodules": ["pause-dice.js"],
