@@ -36,55 +36,59 @@ function updatePauseStatusIndicator(paused) {
   }
 }
 
-// Use the preCreateChatMessage hook to block the dice roll
-Hooks.on('preCreateChatMessage', (message, options, userId) => {
-  const user = game.users.get(userId);
+// Wait for Foundry to be fully initialized before adding hooks and socket events
+Hooks.once('ready', () => {
 
-  // Block the roll if globally paused or if the specific player is locked
-  if (diceRollingPaused || lockedPlayers[userId]) {
-    console.log(`Player ${user.name} cannot roll dice - dice rolling is paused or locked.`);
-    ui.notifications.error(`Dice rolling is paused for ${user.name}.`);
-    return false; // Prevent the dice roll from being created
-  }
+  // Use the preCreateChatMessage hook to block the dice roll
+  Hooks.on('preCreateChatMessage', (message, options, userId) => {
+    const user = game.users.get(userId);
 
-  return true; // Allow the roll
-});
+    // Block the roll if globally paused or if the specific player is locked
+    if (diceRollingPaused || lockedPlayers[userId]) {
+      console.log(`Player ${user.name} cannot roll dice - dice rolling is paused or locked.`);
+      ui.notifications.error(`Dice rolling is paused for ${user.name}.`);
+      return false; // Prevent the dice roll from being created
+    }
 
-// Handle socket events to synchronize dice pause status across all players
-game.socket.on('module.pause-dice-rolling', (data) => {
-  if (data.paused !== undefined) {
-    diceRollingPaused = data.paused;
-    updatePauseStatusIndicator(diceRollingPaused);
-  }
-
-  if (data.lockedPlayer !== undefined) {
-    lockedPlayers[data.lockedPlayer] = data.isLocked;
-  }
-});
-
-// Add controls for the GM to pause/unpause dice rolling and lock/unlock player rolls
-Hooks.on('getSceneControlButtons', (controls) => {
-  if (!game.user.isGM) return;
-
-  controls.push({
-    name: 'pauseDiceRolling',
-    title: 'Pause Dice Rolling',
-    icon: 'fas fa-pause',
-    onClick: toggleDicePause,
-    toggle: true,
-    active: diceRollingPaused
+    return true; // Allow the roll
   });
 
-  game.users.forEach((user) => {
-    if (!user.isGM) {
-      controls.push({
-        name: `lockRolls-${user.id}`,
-        title: `Lock Rolls for ${user.name}`,
-        icon: 'fas fa-lock',
-        onClick: () => togglePlayerRollLock(user.id),
-        toggle: true,
-        active: !!lockedPlayers[user.id]
-      });
+  // Handle socket events to synchronize dice pause status across all players
+  game.socket.on('module.pause-dice-rolling', (data) => {
+    if (data.paused !== undefined) {
+      diceRollingPaused = data.paused;
+      updatePauseStatusIndicator(diceRollingPaused);
     }
+
+    if (data.lockedPlayer !== undefined) {
+      lockedPlayers[data.lockedPlayer] = data.isLocked;
+    }
+  });
+
+  // Add controls for the GM to pause/unpause dice rolling and lock/unlock player rolls
+  Hooks.on('getSceneControlButtons', (controls) => {
+    if (!game.user.isGM) return;
+
+    controls.push({
+      name: 'pauseDiceRolling',
+      title: 'Pause Dice Rolling',
+      icon: 'fas fa-pause',
+      onClick: toggleDicePause,
+      toggle: true,
+      active: diceRollingPaused
+    });
+
+    game.users.forEach((user) => {
+      if (!user.isGM) {
+        controls.push({
+          name: `lockRolls-${user.id}`,
+          title: `Lock Rolls for ${user.name}`,
+          icon: 'fas fa-lock',
+          onClick: () => togglePlayerRollLock(user.id),
+          toggle: true,
+          active: !!lockedPlayers[user.id]
+        });
+      }
+    });
   });
 });
