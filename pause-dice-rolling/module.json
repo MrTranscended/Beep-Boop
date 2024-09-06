@@ -22,5 +22,5 @@
   "esmodules": ["pause-dice.js"],
   "minimumCoreVersion": "12",
   "compatibleCoreVersion": "12",
-  "manifest": "https://github.com/MrTranscended/Beep-Boop/blob/main/pause-dice-rolling/module.json",
+  "manifest": "https://raw.githubusercontent.com/MrTranscended/Beep-Boop/main/pause-dice-rolling/module.json",
 }
