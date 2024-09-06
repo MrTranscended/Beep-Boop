@@ -8,7 +8,6 @@
     "minimum": "12",
     "verified": "12"
   },
-  "url": "https://github.com/MrTranscended/Beep-Boop/tree/f63538b2fc21ab8d99714639c1906414fdd9ba0e/pause-dice-rolling",
   "authors": [
     {
       "name": "Mr. Transcended",
@@ -17,6 +16,7 @@
       "flags": {}
     }
   ],
+  "url": "https://github.com/MrTranscended/Beep-Boop/tree/f63538b2fc21ab8d99714639c1906414fdd9ba0e/pause-dice-rolling",
   "scripts": ["pause-dice.js"],
   "styles": ["styles.css"],
   "esmodules": ["pause-dice.js"],
