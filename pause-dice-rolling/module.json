@@ -23,5 +23,5 @@
   "minimumCoreVersion": "12",
   "compatibleCoreVersion": "12",
   "manifest": "https://raw.githubusercontent.com/MrTranscended/Beep-Boop/main/pause-dice-rolling/module.json",
-  "download": 
+  "download": "https://raw.githubusercontent.com/MrTranscended/Beep-Boop/main/pause-dice-rolling/pdr-module.zip",
 }
