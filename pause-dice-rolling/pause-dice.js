@@ -29,18 +29,21 @@ function togglePlayerRollLock(playerId) {
 function updatePauseStatusIndicator(paused) {
   if (paused) {
     pauseStatusElement.classList.add('paused');
+    ui.notifications.info("Dice rolling is paused.");
   } else {
     pauseStatusElement.classList.remove('paused');
+    ui.notifications.info("Dice rolling is resumed.");
   }
 }
 
 // Listen for dice roll events and prevent rolling if paused or locked for specific players
 Hooks.on('diceSoNiceRollStart', (message) => {
-  const userId = message.userId;
+  const userId = message.user?.id; // Make sure to access user correctly
 
   // Block the roll if globally paused or if the specific player is locked
   if (diceRollingPaused || lockedPlayers[userId]) {
     console.log(`Player ${userId} cannot roll dice - dice rolling is paused or locked.`);
+    ui.notifications.error(`Dice rolling is paused for ${userId ? game.users.get(userId)?.name : 'everyone'}.`);
     return false; // Prevent the dice roll
   }
 
@@ -60,20 +63,28 @@ game.socket.on('module.pause-dice-rolling', (data) => {
 });
 
 // Add controls for the GM to pause/unpause dice rolling and lock/unlock player rolls
-Hooks.on('renderSidebarTab', (app, html) => {
+Hooks.on('getSceneControlButtons', (controls) => {
   if (!game.user.isGM) return;
 
-  // Add a pause/unpause button to the sidebar
-  const pauseButton = $(`<button class="pause-dice-button">${diceRollingPaused ? 'Unpause Dice' : 'Pause Dice'}</button>`);
-  pauseButton.on('click', toggleDicePause);
-  html.find('.directory-footer').append(pauseButton);
+  controls.push({
+    name: 'pauseDiceRolling',
+    title: 'Pause Dice Rolling',
+    icon: 'fas fa-pause',
+    onClick: toggleDicePause,
+    toggle: true,
+    active: diceRollingPaused
+  });
 
-  // Add lock/unlock buttons for each player to the sidebar
   game.users.forEach((user) => {
     if (!user.isGM) {
-      const lockButton = $(`<button class="lock-dice-button">${lockedPlayers[user.id] ? `Unlock Rolls for ${user.name}` : `Lock Rolls for ${user.name}`}</button>`);
-      lockButton.on('click', () => togglePlayerRollLock(user.id));
-      html.find('.directory-footer').append(lockButton);
+      controls.push({
+        name: `lockRolls-${user.id}`,
+        title: `Lock Rolls for ${user.name}`,
+        icon: 'fas fa-lock',
+        onClick: () => togglePlayerRollLock(user.id),
+        toggle: true,
+        active: !!lockedPlayers[user.id]
+      });
     }
   });
 });
