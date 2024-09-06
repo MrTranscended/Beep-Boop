@@ -1,6 +1,6 @@
 {
   "id": "pause-dice-rolling",
-  "name" : "Pause Dice Rolling",
+  "name": "Pause Dice Rolling",
   "title": "Pause Dice Rolling",
   "description": "Allows the GM to pause/un-pause dice rolling and lock/unlock specific player rolls.",
   "version": "1.0.1",
