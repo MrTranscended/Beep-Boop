@@ -36,15 +36,15 @@ function updatePauseStatusIndicator(paused) {
   }
 }
 
-// Listen for dice roll events and prevent rolling if paused or locked for specific players
-Hooks.on('diceSoNiceRollStart', (message) => {
-  const userId = message.user?.id; // Make sure to access user correctly
+// Use the preCreateChatMessage hook to block the dice roll
+Hooks.on('preCreateChatMessage', (message, options, userId) => {
+  const user = game.users.get(userId);
 
   // Block the roll if globally paused or if the specific player is locked
   if (diceRollingPaused || lockedPlayers[userId]) {
-    console.log(`Player ${userId} cannot roll dice - dice rolling is paused or locked.`);
-    ui.notifications.error(`Dice rolling is paused for ${userId ? game.users.get(userId)?.name : 'everyone'}.`);
-    return false; // Prevent the dice roll
+    console.log(`Player ${user.name} cannot roll dice - dice rolling is paused or locked.`);
+    ui.notifications.error(`Dice rolling is paused for ${user.name}.`);
+    return false; // Prevent the dice roll from being created
   }
 
   return true; // Allow the roll
