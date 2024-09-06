@@ -15,6 +15,12 @@ function toggleDicePause() {
 
   // Notify players about dice pause status
   game.socket.emit('module.pause-dice-rolling', { paused: diceRollingPaused });
+
+  // Update button active state
+  const button = document.querySelector('.control-icon[data-control="pauseDiceRolling"]');
+  if (button) {
+    button.classList.toggle('active', diceRollingPaused);
+  }
 }
 
 // GM can lock/unlock dice rolling for specific players
@@ -63,6 +69,7 @@ game.socket.on('module.pause-dice-rolling', (data) => {
 Hooks.on('getSceneControlButtons', (controls) => {
   if (!game.user.isGM) return;
 
+  // Add the dice pause button in the Token Controls sidebar
   controls.push({
     name: 'pauseDiceRolling',
     title: 'Pause Dice Rolling',
@@ -72,6 +79,7 @@ Hooks.on('getSceneControlButtons', (controls) => {
     active: diceRollingPaused
   });
 
+  // Add lock/unlock buttons for each player in the GM's control panel
   game.users.forEach((user) => {
     if (!user.isGM) {
       controls.push({
@@ -84,4 +92,24 @@ Hooks.on('getSceneControlButtons', (controls) => {
       });
     }
   });
+});
+
+// Add a button to the Settings sidebar to pause/un-pause dice rolls
+Hooks.on('renderSidebarTab', (app, html) => {
+  if (app.options.id === "settings") {
+    const pauseButton = $(`
+      <button class="dice-pause-button">
+        <i class="fas fa-pause"></i> ${diceRollingPaused ? "Resume Dice Rolling" : "Pause Dice Rolling"}
+      </button>
+    `);
+
+    // Add the button to the settings sidebar
+    html.find(".directory-footer").append(pauseButton);
+
+    // Toggle the pause state on click
+    pauseButton.click(() => {
+      toggleDicePause();
+      pauseButton.html(`<i class="fas fa-pause"></i> ${diceRollingPaused ? "Resume Dice Rolling" : "Pause Dice Rolling"}`);
+    });
+  }
 });
