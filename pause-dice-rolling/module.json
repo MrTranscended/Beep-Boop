@@ -1,4 +1,5 @@
 {
+  "id": "pause-dice",
   "name": "pause-dice",
   "title": "Pause Dice",
   "description": "Allows the GM to pause/un-pause dice rolling and lock/unlock specific player rolls.",
