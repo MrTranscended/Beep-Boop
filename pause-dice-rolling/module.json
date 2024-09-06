@@ -1,9 +1,9 @@
 {
-  "name" : "pause-dice-rolling",
   "id": "pause-dice-rolling",
+  "name" : "Pause Dice Rolling",
   "title": "Pause Dice Rolling",
   "description": "Allows the GM to pause/un-pause dice rolling and lock/unlock specific player rolls.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "compatibility": {
     "minimum": "12",
     "verified": "12"
@@ -23,4 +23,5 @@
   "minimumCoreVersion": "12",
   "compatibleCoreVersion": "12",
   "manifest": "https://raw.githubusercontent.com/MrTranscended/Beep-Boop/main/pause-dice-rolling/module.json",
+  "download": 
 }
