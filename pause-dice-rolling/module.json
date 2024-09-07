@@ -12,7 +12,7 @@
     }
   ],
   "url": "https://github.com/MrTranscended/Beep-Boop/tree/f63538b2fc21ab8d99714639c1906414fdd9ba0e/pause-dice-rolling/",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "minimumCoreVersion": "12",
   "compatibleCoreVersion": "12",
   "compatibility": {
@@ -20,8 +20,10 @@
     "verified": 12
   },
   "scripts": ["pause-dice.js"],
-  "styles": ["styles.css"],
-  "esmodules": ["pause-dice.js"],
+  "styles": [],
+  "esmodules": [],
+  "packs": [],
+  "dependencies": [],
   "manifest": "https://github.com/MrTranscended/Beep-Boop/raw/main/pause-dice-rolling/module.json",
-  "download": "https://github.com/MrTranscended/Beep-Boop/raw/main/pause-dice-rolling/pause-dice-rolling-v1.0.7.zip"
+  "download": "https://github.com/MrTranscended/Beep-Boop/raw/main/pause-dice-rolling/pause-dice-rolling-v1.0.8.zip"
 }
