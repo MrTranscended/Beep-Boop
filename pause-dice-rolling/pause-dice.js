@@ -1,12 +1,26 @@
-// Create and append the pause status indicator to the document body
-const pauseStatusElement = document.createElement('div');
-pauseStatusElement.id = 'pause-dice-status';
-pauseStatusElement.innerText = 'Dice Rolling Paused';
-document.body.appendChild(pauseStatusElement);
-
 // Object to track paused status and player-specific locks
 let diceRollingPaused = false;
 let lockedPlayers = {};
+
+// Create the pause status element when the game is ready
+Hooks.on("ready", () => {
+  const pauseStatusElement = document.createElement('div');
+  pauseStatusElement.id = 'pause-dice-status';
+  pauseStatusElement.innerText = 'Dice Rolling Paused';
+  pauseStatusElement.style.cssText = `
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 10000;
+    padding: 5px 10px;
+    background: rgba(200, 0, 0, 0.8);
+    color: white;
+    font-weight: bold;
+    display: none;
+  `;
+  document.body.appendChild(pauseStatusElement);
+  updatePauseStatusIndicator(diceRollingPaused);
+});
 
 // GM can pause/unpause dice rolling for all players
 function toggleDicePause() {
@@ -19,62 +33,67 @@ function toggleDicePause() {
 
 // GM can lock/unlock dice rolling for specific players
 function togglePlayerRollLock(playerId) {
-  lockedPlayers[playerId] = !lockedPlayers[playerId];
+  const isLocked = !lockedPlayers[playerId];
+  lockedPlayers[playerId] = isLocked;
 
   // Notify the player about their locked/unlocked status
-  game.socket.emit('module.pause-dice-rolling', { lockedPlayer: playerId, isLocked: lockedPlayers[playerId] });
+  game.socket.emit('module.pause-dice-rolling', {
+    lockedPlayer: playerId,
+    isLocked
+  });
 }
 
 // Update the visual pause status indicator for all players
 function updatePauseStatusIndicator(paused) {
-  if (paused) {
-    pauseStatusElement.classList.add('paused');
-  } else {
-    pauseStatusElement.classList.remove('paused');
-  }
+  const el = document.getElementById('pause-dice-status');
+  if (!el) return;
+
+  el.style.display = paused ? 'block' : 'none';
 }
 
-// Listen for dice roll events and prevent rolling if paused or locked for specific players
-Hooks.on('diceSoNiceRollStart', (message) => {
-  const userId = message.userId;
-
-  // Block the roll if globally paused or if the specific player is locked
-  if (diceRollingPaused || lockedPlayers[userId]) {
-    console.log(`Player ${userId} cannot roll dice - dice rolling is paused or locked.`);
-    return false; // Prevent the dice roll
+// Intercept chat messages to prevent dice rolls if paused or locked
+Hooks.on("preCreateChatMessage", (message, options, userId) => {
+  if (!game.users.get(userId)?.isGM && (diceRollingPaused || lockedPlayers[userId])) {
+    console.log(`Player ${userId} attempted to roll while dice rolling is paused or locked.`);
+    ui.notifications.warn("Dice rolling is currently paused or locked for you.");
+    return false;
   }
-
-  return true; // Allow the roll
+  return true;
 });
 
-// Handle socket events to synchronize dice pause status across all players
-game.socket.on('module.pause-dice-rolling', (data) => {
-  if (data.paused !== undefined) {
-    diceRollingPaused = data.paused;
-    updatePauseStatusIndicator(diceRollingPaused);
-  }
+// Receive socket messages to update local state
+Hooks.once("socketlib.ready", () => {
+  game.socket.on('module.pause-dice-rolling', (data) => {
+    if (data.paused !== undefined) {
+      diceRollingPaused = data.paused;
+      updatePauseStatusIndicator(diceRollingPaused);
+    }
 
-  if (data.lockedPlayer !== undefined) {
-    lockedPlayers[data.lockedPlayer] = data.isLocked;
-  }
+    if (data.lockedPlayer !== undefined) {
+      lockedPlayers[data.lockedPlayer] = data.isLocked;
+    }
+  });
 });
 
 // Add controls for the GM to pause/unpause dice rolling and lock/unlock player rolls
 Hooks.on('getSceneControlButtons', (controls) => {
   if (!game.user.isGM) return;
 
-  controls.push({
+  const tokenControls = controls.find(c => c.name === "token");
+  if (!tokenControls) return;
+
+  tokenControls.tools.push({
     name: 'pauseDiceRolling',
     title: 'Pause Dice Rolling',
     icon: 'fas fa-pause',
-    onClick: toggleDicePause,
+    onClick: () => toggleDicePause(),
     toggle: true,
     active: diceRollingPaused
   });
 
-  game.users.forEach((user) => {
+  for (const user of game.users.contents) {
     if (!user.isGM) {
-      controls.push({
+      tokenControls.tools.push({
         name: `lockRolls-${user.id}`,
         title: `Lock Rolls for ${user.name}`,
         icon: 'fas fa-lock',
@@ -83,5 +102,5 @@ Hooks.on('getSceneControlButtons', (controls) => {
         active: !!lockedPlayers[user.id]
       });
     }
-  });
+  }
 });
