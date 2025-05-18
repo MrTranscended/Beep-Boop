@@ -25,7 +25,7 @@
         "pause-dice.js"
     ],
     "compatibility": {
-		"minimum": "12",
+	"minimum": "12",
         "verified": "13"
             },
     "url": "https://github.com/MrTranscended/Beep-Boop/tree/main/pause-dice-rolling/",
