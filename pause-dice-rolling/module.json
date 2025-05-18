@@ -13,7 +13,7 @@
     {
       "name": "Mr. Transcended",
       "email": "mr.transcended@gmail.com",
-      "discord": "mr.transcended",
+      "discord": "mr.transcended"
     }
   ],
   "scripts": ["pause-dice.js"],
