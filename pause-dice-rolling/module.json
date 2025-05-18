@@ -27,7 +27,7 @@
     "compatibility": {
 	"minimum": "12",
         "verified": "13"
-            },
+    },
     "url": "https://github.com/MrTranscended/Beep-Boop/tree/main/pause-dice-rolling/",
     "manifest": "https://raw.githubusercontent.com/MrTranscended/Beep-Boop/main/pause-dice-rolling/module.json",
     "download": "https://raw.githubusercontent.com/MrTranscended/Beep-Boop/main/pause-dice-rolling/pause-dice-rolling-v1.2.0.zip"
