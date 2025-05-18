@@ -14,7 +14,6 @@
       "name": "Mr. Transcended",
       "email": "mr.transcended@gmail.com",
       "discord": "mr.transcended",
-      "flags": {}
     }
   ],
   "scripts": ["pause-dice.js"],
