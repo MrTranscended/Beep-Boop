@@ -1,35 +1,26 @@
 {
   "id": "pause-dice-rolling",
-  "type": "module",
+  "name" : "Pause Dice Rolling",
   "title": "Pause Dice Rolling",
+  "description": "Allows the GM to pause/un-pause dice rolling and lock/unlock specific player rolls.",
   "version": "1.2.0",
-
   "compatibility": {
     "minimum": "12",
     "verified": "13"
   },
-
+  "url": "https://github.com/MrTranscended/Beep-Boop/tree/main/pause-dice-rolling/",
+  "authors": [
+    {
+      "name": "Mr. Transcended",
+      "email": "mr.transcended@gmail.com",
+      "discord": "mr.transcended"
+    }
+  ],
   "scripts": ["pause-dice.js"],
-  "esmodules": ["pause-dice.js"],
   "styles": ["styles.css"],
-
-  "relationships": {
-    "requires": [],
-    "dependencies": []
-  },
-
-  "metadata": {
-    "description": "Allows the GM to pause/un-pause dice rolling and lock/unlock specific player rolls.",
-    "authors": [
-      {
-        "name": "Mr. Transcended",
-        "email": "mr.transcended@gmail.com",
-        "discord": "mr.transcended"
-      }
-    ],
-    "license": "",
-    "url": "https://github.com/MrTranscended/Beep-Boop",
-    "manifest": "https://raw.githubusercontent.com/MrTranscended/Beep-Boop/main/pause-dice-rolling/module.json",
-    "download": "https://raw.githubusercontent.com/MrTranscended/Beep-Boop/main/pause-dice-rolling/pause-dice-rolling-v1.2.0.zip"
-  }
+  "esmodules": ["pause-dice.js"],
+  "minimumCoreVersion": "12",
+  "compatibleCoreVersion": "13",
+  "manifest": "https://raw.githubusercontent.com/MrTranscended/Beep-Boop/main/pause-dice-rolling/module.json",
+  "download": "https://raw.githubusercontent.com/MrTranscended/Beep-Boop/main/pause-dice-rolling/pause-dice-rolling-v1.2.0.zip"
 }
