@@ -1,37 +1,29 @@
 {
-    "id": "pause-dice-rolling",
-    "title": "Pause Dice Rolling",
-    "description": "Allows the GM to pause/un-pause dice rolling and lock/unlock specific player rolls.",
-    "version": "1.2.0",
-    "authors": [
-        {
-            "name": "Mr. Transcended",
-            "email": "mr.transcended@gmail.com",
-            "discord": "mr.transcended"
-        }
-    ],
-    "scripts": [
-        "pause-dice.js"
-    ],
-    "styles": [
-        "styles.css"
-    ],
-    "esmodules": [
-        "pause-dice.js"
-    ],
-    "compatibility": {
-            "minimum": "12",
-            "verified": "13"
-    },
-    "relationships": {
-        "dependencies": [
-            {
-                "id": "lib-wrapper",
-                "type": "module"
-            }
-        ]
-    },
-    "url": "https://github.com/MrTranscended/Beep-Boop/tree/main/pause-dice-rolling/",
-    "manifest": "https://raw.githubusercontent.com/MrTranscended/Beep-Boop/main/pause-dice-rolling/module.json",
-    "download": "https://raw.githubusercontent.com/MrTranscended/Beep-Boop/main/pause-dice-rolling/pause-dice-rolling-v1.2.0.zip"
+  "id": "pause-dice-rolling",
+  "title": "Pause Dice Rolling",
+  "description": "Allows the GM to pause/un-pause dice rolling and lock/unlock specific player rolls.",
+  "version": "1.3.0",
+  "authors": [
+    {
+      "name": "MrTranscended",
+      "url": "https://github.com/MrTranscended/Beep-Boop",
+      "discord": "MrTranscended#4956"
+    }
+  ],
+  "url": "https://github.com/MrTranscended/Beep-Boop/tree/main/pause-dice-rolling/",
+  "manifest": "https://raw.githubusercontent.com/MrTranscended/Beep-Boop/main/pause-dice-rolling/module.json",
+  "download": "https://github.com/MrTranscended/Beep-Boop/raw/main/pause-dice-rolling/pause-dice-rolling-v1.3.0.zip",
+  "license": "MIT",
+  "esmodules": ["pause-dice.js"],
+  "styles": ["styles.css"],
+  "compatibility": { "minimum": "13", "verified": "13" },
+  "relationships": {
+    "requires": [
+      {
+        "id": "lib-wrapper",
+        "type": "module",
+        "manifest": "https://github.com/ruipin/fvtt-lib-wrapper/releases/latest/download/module.json"
+      }
+    ]
+  }
 }
