@@ -1,108 +1,126 @@
-// Track global state
-let diceRollingPaused = false;
-let lockedPlayers = {};
+// pause-dice.js
+// Module to pause dice rolling and lock specific players, compatible with Foundry V13+.
 
-// Add visual indicator
-Hooks.on("ready", () => {
-  // Add pause status UI
-  const pauseStatusElement = document.createElement('div');
-  pauseStatusElement.id = 'pause-dice-status';
-  pauseStatusElement.innerText = 'Dice Rolling Paused';
-  pauseStatusElement.style.cssText = `
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    z-index: 10000;
-    padding: 5px 10px;
-    background: rgba(200, 0, 0, 0.8);
-    color: white;
-    font-weight: bold;
-    display: none;
-  `;
-  document.body.appendChild(pauseStatusElement);
-  updatePauseStatusIndicator(diceRollingPaused);
+const MODULE_ID = "pause-dice-rolling";
 
-  // Set up socket listener
-  game.socket.on('module.pause-dice-rolling', (data) => {
-    if (data.paused !== undefined) {
-      diceRollingPaused = data.paused;
-      updatePauseStatusIndicator(diceRollingPaused);
-    }
-
-    if (data.lockedPlayer !== undefined) {
-      lockedPlayers[data.lockedPlayer] = data.isLocked;
-    }
+Hooks.once('init', () => {
+  // Register persistent settings (world scope)
+  game.settings.register(MODULE_ID, "paused", {
+    name: "Paused Dice Rolling",
+    scope: "world",
+    config: false,
+    type: Boolean,
+    default: false
   });
+  game.settings.register(MODULE_ID, "lockedPlayers", {
+    name: "Locked Players",
+    scope: "world",
+    config: false,
+    type: Array,
+    default: []
+  });
+
+  // Wrap ChatMessage.create to block rolls when paused or locked
+  libWrapper.register(MODULE_ID, "ChatMessage.create", async function (original, data, options) {
+    // Block if the game is paused and user is not GM
+    if (game.paused && !game.user.isGM) {
+      if (game.user) ui.notifications.warn("Dice rolling is currently paused.");
+      return;
+    }
+    // Block if user is locked
+    const locked = game.settings.get(MODULE_ID, "lockedPlayers") || [];
+    if (locked.includes(game.userId)) {
+      ui.notifications.warn("You are locked from rolling dice.");
+      return;
+    }
+    // Allow creation
+    return original(data, options);
+  }, "WRAPPER");
 });
 
-// Update pause status UI
-function updatePauseStatusIndicator(paused) {
-  const el = document.getElementById('pause-dice-status');
-  if (!el) return;
-  el.style.display = paused ? 'block' : 'none';
-}
-
-// Toggle global dice rolling pause (GM only)
-function toggleDicePause() {
-  diceRollingPaused = !diceRollingPaused;
-  updatePauseStatusIndicator(diceRollingPaused);
-  game.socket.emit('module.pause-dice-rolling', { paused: diceRollingPaused });
-  ui.controls.initialize(); // Refresh toolbar toggle state
-}
-
-// Toggle per-player roll lock (GM only)
-function togglePlayerRollLock(playerId) {
-  const isLocked = !lockedPlayers[playerId];
-  lockedPlayers[playerId] = isLocked;
-  game.socket.emit('module.pause-dice-rolling', {
-    lockedPlayer: playerId,
-    isLocked
-  });
-  ui.controls.initialize(); // Refresh toolbar toggle state
-}
-
-// Add controls to scene controls for the GM
-Hooks.on('getSceneControlButtons', (controls) => {
-  if (!game.user.isGM) return;
-
-  const tokenControls = controls.find(c => c.name === "token");
-  if (!tokenControls) return;
-
-  tokenControls.tools.push({
-    name: 'pauseDiceRolling',
-    title: 'Pause Dice Rolling',
-    icon: 'fas fa-pause',
-    onClick: () => toggleDicePause(),
-    toggle: true,
-    active: diceRollingPaused
-  });
-
-  for (const user of game.users.contents) {
-    if (!user.isGM) {
-      tokenControls.tools.push({
-        name: `lockRolls-${user.id}`,
-        title: `Lock Rolls for ${user.name}`,
-        icon: 'fas fa-lock',
-        onClick: () => togglePlayerRollLock(user.id),
-        toggle: true,
-        active: !!lockedPlayers[user.id]
-      });
-    }
+Hooks.once('ready', () => {
+  // Re-apply paused state on load if saved and if current user is GM
+  const shouldBePaused = game.settings.get(MODULE_ID, "paused");
+  if (shouldBePaused && game.user.isGM && !game.paused) {
+    game.togglePause(true); // Broadcasts to all clients
   }
 });
 
-// Use libWrapper to intercept message creation safely
-Hooks.once("init", () => {
-  if (game.modules.get("lib-wrapper")?.active) {
-    libWrapper.register("pause-dice-rolling", "ChatMessage.create", function (wrapped, ...args) {
-      const [data, options, userId] = args;
-      if (!game.users.get(userId)?.isGM && (diceRollingPaused || lockedPlayers[userId])) {
-        ui.notifications.warn("Dice rolling is currently paused or locked for you.");
-        return null;
+Hooks.on("pauseGame", (paused, options) => {
+  // Update stored paused state when toggled (GM only)
+  if (game.user.isGM) {
+    game.settings.set(MODULE_ID, "paused", paused);
+  }
+});
+
+Hooks.on("chatMessage", (chatLog, message, chatData) => {
+  // Only process GM commands
+  if (!game.user.isGM) return;
+
+  const parts = message.trim().split(/\s+/);
+  if (parts[0] === "/pausedice") {
+    // Prevent the message from appearing in chat
+    let notify = ui.notifications.info;
+    switch (parts[1]) {
+      case "pause":
+        game.togglePause(true);
+        notify("Game paused. Dice are now frozen.");
+        break;
+      case "unpause":
+        game.togglePause(false);
+        notify("Game unpaused. Dice are enabled again.");
+        break;
+      case "lock":
+      case "unlock": {
+        // Expect a player name argument
+        const name = parts.slice(2).join(" ");
+        const user = game.users.find(u => u.name === name);
+        if (!user) {
+          ui.notifications.warn(`User "${name}" not found.`);
+          return false;
+        }
+        const locked = game.settings.get(MODULE_ID, "lockedPlayers") || [];
+        const isLock = parts[1] === "lock";
+        const idx = locked.indexOf(user.id);
+        if (isLock && idx === -1) {
+          locked.push(user.id);
+          game.settings.set(MODULE_ID, "lockedPlayers", locked);
+          notify(`Locked dice rolls for ${user.name}.`);
+        } else if (!isLock && idx !== -1) {
+          locked.splice(idx, 1);
+          game.settings.set(MODULE_ID, "lockedPlayers", locked);
+          notify(`Unlocked dice rolls for ${user.name}.`);
+        } else {
+          ui.notifications.warn(`User "${user.name}" is already ${isLock ? "" : "un"}locked.`);
+        }
+        break;
       }
-      return wrapped(...args);
-    }, "WRAPPER");
-  } else {
-    console.warn("Pause Dice Rolling: libWrapper not active, dice blocking won't work!");
+      default:
+        // Not a recognized command
+        break;
+    }
+    // Do not display the command message
+    return false;
+  }
+});
+
+Hooks.on("preCreateDocument", (doc, data, options, userId) => {
+  // Intercept ChatMessage creation before saving
+  if (doc.documentName !== "ChatMessage") return;
+
+  // Only block if this message contains a dice roll
+  if (!(data.rolls && data.rolls.length)) return;
+
+  // If paused and not GM, cancel the message
+  const user = game.users.get(userId);
+  if (game.paused && (!user || !user.isGM)) {
+    if (userId === game.userId) ui.notifications.warn("Dice rolling is currently paused.");
+    return false;
+  }
+  // If user is locked, cancel the message
+  const locked = game.settings.get(MODULE_ID, "lockedPlayers") || [];
+  if (locked.includes(userId)) {
+    if (userId === game.userId) ui.notifications.warn("You are locked from rolling dice.");
+    return false;
   }
 });
