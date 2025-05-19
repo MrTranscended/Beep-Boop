@@ -1,9 +1,10 @@
-// Object to track paused status and player-specific locks
+// Track global state
 let diceRollingPaused = false;
 let lockedPlayers = {};
 
-// Create the pause status element when the game is ready
+// Add visual indicator
 Hooks.on("ready", () => {
+  // Add pause status UI
   const pauseStatusElement = document.createElement('div');
   pauseStatusElement.id = 'pause-dice-status';
   pauseStatusElement.innerText = 'Dice Rolling Paused';
@@ -20,49 +21,8 @@ Hooks.on("ready", () => {
   `;
   document.body.appendChild(pauseStatusElement);
   updatePauseStatusIndicator(diceRollingPaused);
-});
 
-// GM can pause/unpause dice rolling for all players
-function toggleDicePause() {
-  diceRollingPaused = !diceRollingPaused;
-  updatePauseStatusIndicator(diceRollingPaused);
-
-  // Notify players about dice pause status
-  game.socket.emit('module.pause-dice-rolling', { paused: diceRollingPaused });
-}
-
-// GM can lock/unlock dice rolling for specific players
-function togglePlayerRollLock(playerId) {
-  const isLocked = !lockedPlayers[playerId];
-  lockedPlayers[playerId] = isLocked;
-
-  // Notify the player about their locked/unlocked status
-  game.socket.emit('module.pause-dice-rolling', {
-    lockedPlayer: playerId,
-    isLocked
-  });
-}
-
-// Update the visual pause status indicator for all players
-function updatePauseStatusIndicator(paused) {
-  const el = document.getElementById('pause-dice-status');
-  if (!el) return;
-
-  el.style.display = paused ? 'block' : 'none';
-}
-
-// Intercept chat messages to prevent dice rolls if paused or locked
-Hooks.on("preCreateChatMessage", (message, options, userId) => {
-  if (!game.users.get(userId)?.isGM && (diceRollingPaused || lockedPlayers[userId])) {
-    console.log(`Player ${userId} attempted to roll while dice rolling is paused or locked.`);
-    ui.notifications.warn("Dice rolling is currently paused or locked for you.");
-    return false;
-  }
-  return true;
-});
-
-// Receive socket messages to update local state
-Hooks.once("socketlib.ready", () => {
+  // Set up socket listener
   game.socket.on('module.pause-dice-rolling', (data) => {
     if (data.paused !== undefined) {
       diceRollingPaused = data.paused;
@@ -75,7 +35,33 @@ Hooks.once("socketlib.ready", () => {
   });
 });
 
-// Add controls for the GM to pause/unpause dice rolling and lock/unlock player rolls
+// Update pause status UI
+function updatePauseStatusIndicator(paused) {
+  const el = document.getElementById('pause-dice-status');
+  if (!el) return;
+  el.style.display = paused ? 'block' : 'none';
+}
+
+// Toggle global dice rolling pause (GM only)
+function toggleDicePause() {
+  diceRollingPaused = !diceRollingPaused;
+  updatePauseStatusIndicator(diceRollingPaused);
+  game.socket.emit('module.pause-dice-rolling', { paused: diceRollingPaused });
+  ui.controls.initialize(); // Refresh toolbar toggle state
+}
+
+// Toggle per-player roll lock (GM only)
+function togglePlayerRollLock(playerId) {
+  const isLocked = !lockedPlayers[playerId];
+  lockedPlayers[playerId] = isLocked;
+  game.socket.emit('module.pause-dice-rolling', {
+    lockedPlayer: playerId,
+    isLocked
+  });
+  ui.controls.initialize(); // Refresh toolbar toggle state
+}
+
+// Add controls to scene controls for the GM
 Hooks.on('getSceneControlButtons', (controls) => {
   if (!game.user.isGM) return;
 
@@ -102,5 +88,21 @@ Hooks.on('getSceneControlButtons', (controls) => {
         active: !!lockedPlayers[user.id]
       });
     }
+  }
+});
+
+// Use libWrapper to intercept message creation safely
+Hooks.once("init", () => {
+  if (game.modules.get("lib-wrapper")?.active) {
+    libWrapper.register("pause-dice-rolling", "ChatMessage.create", function (wrapped, ...args) {
+      const [data, options, userId] = args;
+      if (!game.users.get(userId)?.isGM && (diceRollingPaused || lockedPlayers[userId])) {
+        ui.notifications.warn("Dice rolling is currently paused or locked for you.");
+        return null;
+      }
+      return wrapped(...args);
+    }, "WRAPPER");
+  } else {
+    console.warn("Pause Dice Rolling: libWrapper not active, dice blocking won't work!");
   }
 });
