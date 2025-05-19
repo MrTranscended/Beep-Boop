@@ -19,9 +19,19 @@
     "esmodules": [
         "pause-dice.js"
     ],
-    "compatibility": {
-        "minimum": "12",
-        "verified": "13"
+    "compatibility": [
+        {
+            "minimum": "12",
+            "verified": "13"
+        }
+    ],
+    "relationships": {
+        "dependencies": [
+            {
+                "id": "lib-wrapper",
+                "type": "module"
+            }
+        ]
     },
     "url": "https://github.com/MrTranscended/Beep-Boop/tree/main/pause-dice-rolling/",
     "manifest": "https://raw.githubusercontent.com/MrTranscended/Beep-Boop/main/pause-dice-rolling/module.json",
