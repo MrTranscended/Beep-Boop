@@ -117,10 +117,11 @@ Hooks.on("getSceneControlButtons", (controls) => {
   if (!game.user.isGM) return;
 
   const tokenControls = controls.find(c => c.name === "token");
-  if (!tokenControls) return;
+  if (!tokenControls || !tokenControls.tools) return;
 
   const locked = game.settings.get(MODULE_ID, "lockedPlayers") || [];
 
+  // Pause toggle
   tokenControls.tools.push({
     name: "pauseDiceRolling",
     title: "Pause Dice Rolling (Toggle Game Pause)",
@@ -128,33 +129,39 @@ Hooks.on("getSceneControlButtons", (controls) => {
     toggle: true,
     active: game.paused,
     onClick: () => {
-      game.togglePause(!game.paused);
-      ui.notifications.info(`Game ${game.paused ? "paused" : "unpaused"}.`);
+      const paused = !game.paused;
+      game.togglePause(paused);
+      ui.notifications.info(`Game ${paused ? "paused" : "unpaused"}.`);
+      ui.controls.initialize(); // Refresh buttons
     }
   });
 
-  // Add lock/unlock toggles for each player
+  // Lock/unlock toggles for each player
   for (const user of game.users.contents) {
     if (user.isGM) continue;
 
+    const isLocked = locked.includes(user.id);
+
     tokenControls.tools.push({
       name: `lockPlayer-${user.id}`,
-      title: `Toggle Roll Lock: ${user.name}`,
-      icon: locked.includes(user.id) ? "fas fa-lock" : "fas fa-lock-open",
+      title: `${isLocked ? "Unlock" : "Lock"} Dice Rolls for ${user.name}`,
+      icon: isLocked ? "fas fa-lock" : "fas fa-lock-open",
       toggle: true,
-      active: locked.includes(user.id),
+      active: isLocked,
       onClick: async (toggled) => {
-        const current = game.settings.get(MODULE_ID, "lockedPlayers") || [];
-        const idx = current.indexOf(user.id);
+        let updated = [...locked];
+        const idx = updated.indexOf(user.id);
+
         if (toggled && idx === -1) {
-          current.push(user.id);
+          updated.push(user.id);
           ui.notifications.info(`Locked rolls for ${user.name}.`);
         } else if (!toggled && idx !== -1) {
-          current.splice(idx, 1);
+          updated.splice(idx, 1);
           ui.notifications.info(`Unlocked rolls for ${user.name}.`);
         }
-        await game.settings.set(MODULE_ID, "lockedPlayers", current);
-        ui.controls.initialize(); // Force UI to update icons
+
+        await game.settings.set(MODULE_ID, "lockedPlayers", updated);
+        ui.controls.initialize(); // Refresh UI buttons
       }
     });
   }
